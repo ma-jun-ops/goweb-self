@@ -1,0 +1,9 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: 这是后端 API 接口文档
+  title: my API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

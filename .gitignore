@@ -1,0 +1,19 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Go build artifacts
+/bin/
+*.exe
+*.test
+*.out
+*.prof
+
+# OS
+.DS_Store
+
+# Env / secrets
+.env
+.env.*
+!.env.example
