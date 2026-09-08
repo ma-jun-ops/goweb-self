@@ -1,1 +1,1 @@
-# goweb-self-stock
+# goweb-self
