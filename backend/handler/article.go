@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 	"web/database"
@@ -36,6 +37,11 @@ func CreateArticle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	database.PublishArticleEvent(database.ArticleEvent{
+		Action:  "index",
+		Article: &article,
+		ID:      article.ID.Hex(),
+	})
 	c.JSON(http.StatusOK, gin.H{"message": "发布成功", "article": article})
 }
 
@@ -62,8 +68,22 @@ func GetArticle(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章 ID"})
 		return
 	}
+
+	ctx := context.Background()
+	cacheKey := "article:" + c.Param("id")
+
+	// 1. 先查 Redis 缓存
+	if cached, err := database.RedisClient.Get(ctx, cacheKey).Result(); err == nil {
+		var article model.Article
+		if json.Unmarshal([]byte(cached), &article) == nil {
+			c.JSON(http.StatusOK, gin.H{"article": article})
+			return
+		}
+	}
+
+	// 2. 缓存未命中，查 MongoDB
 	var article model.Article
-	err = database.ArticleCollection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&article)
+	err = database.ArticleCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&article)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
@@ -72,6 +92,12 @@ func GetArticle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// 3. 写回缓存，TTL 5 分钟
+	if data, err := json.Marshal(article); err == nil {
+		database.RedisClient.Set(ctx, cacheKey, data, 5*time.Minute)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"article": article})
 }
 
@@ -113,6 +139,15 @@ func UpdateArticle(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在 "})
 		return
 	}
+	database.RedisClient.Del(context.Background(), "article:"+c.Param("id"))
+	var updated model.Article
+	if err := database.ArticleCollection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&updated); err != nil {
+		database.PublishArticleEvent(database.ArticleEvent{
+			Action:  "index",
+			Article: &updated,
+			ID:      updated.ID.Hex(),
+		})
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "文章更新成功"})
 }
 
@@ -131,5 +166,24 @@ func DeleteArticle(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
 		return
 	}
+	database.RedisClient.Del(context.Background(), "article:"+c.Param("id"))
+	database.PublishArticleEvent(database.ArticleEvent{
+		Action: "delete",
+		ID:     c.Param("id"),
+	})
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
+}
+
+func SearchArticle(c *gin.Context) {
+	keyword := c.Query("q")
+	if keyword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少搜索关键词"})
+		return
+	}
+	articles, err := database.SearchArticles(keyword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": articles})
 }

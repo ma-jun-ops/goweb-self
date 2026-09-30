@@ -133,20 +133,21 @@ func extractDocxWithImages(ctx context.Context, data []byte) string {
 		if err != nil {
 			continue
 		}
-		text = strings.Replace(text, "[IMG:"+rid+"]", "[IMG:"+imgID.String()+"]", 1)
+		text = strings.Replace(text, "[IMG:"+rid+"]", "[IMG:"+imgID.Hex()+"]", 1)
 	}
 	return text
 }
 
+// extractTextAndImages 按顺序提取文字和图片引用
 func extractTextAndImages(documentXML []byte) (string, []string) {
 	type textNode struct {
 		Text string `xml:",chardata"`
 	}
-	decoder := xml.NewDecoder(bytes.NewReader(documentXML))
+	decoder := xml.NewDecoder(bytes.NewReader(documentXML))//解析器
 	var builder strings.Builder
 	var rids []string
 	for {
-		token, err := decoder.Token()
+		token, err := decoder.Token()//下一个完整的token/文字/图片引用
 		if err != nil {
 			break
 		}
@@ -155,12 +156,12 @@ func extractTextAndImages(documentXML []byte) (string, []string) {
 			continue
 		}
 		switch start.Name.Local {
-		case "t":
+		case "t"://文字
 			var node textNode
 			if err := decoder.DecodeElement(&node, &start); err == nil {
 				builder.WriteString(node.Text)
 			}
-		case "blip":
+		case "blip"://图片
 			for _, attr := range start.Attr {
 				if attr.Name.Local == "embed" {
 					builder.WriteString("[IMG:" + attr.Value + "]")

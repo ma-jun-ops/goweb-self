@@ -22,6 +22,9 @@ import (
 
 func main() {
 	database.ConnectDB()
+	database.InitRedis()
+	database.ConnectElasticsearch()
+	database.ConnectKafka()
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
@@ -43,6 +46,7 @@ func main() {
 		api.POST("/files/upload", handler.UploadFile)
 		api.GET("/files/:id/download", handler.DownloadFile)
 		api.GET("/files/:id/image", handler.ImageFile)
+		api.GET("/search", handler.SearchArticle)
 	}
 
 	log.Println("后端服务启动成功，监听地址: http://localhost:8080")
