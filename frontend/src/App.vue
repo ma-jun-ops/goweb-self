@@ -1,32 +1,51 @@
 <template>
   <div class="app">
-    <div class="bg-gradient"></div>
-    <canvas ref="bgCanvas" class="bg-canvas"></canvas>
+    <div class="bg-wash"></div>
+    <div class="bg-orbs" aria-hidden="true">
+      <span class="orb orb-a"></span>
+      <span class="orb orb-b"></span>
+      <span class="orb orb-c"></span>
+    </div>
+    <div class="bg-grain"></div>
 
-    <!-- 顶部装饰区 -->
     <header class="top-banner">
       <div class="banner-content">
-        <h1 class="site-title">My Little Yard</h1>
+        <p class="site-kicker">a quiet place to write</p>
+        <h1 class="site-title" @click="$router.push('/')">My Little Yard</h1>
         <p class="site-subtitle">简单一点，快一点</p>
       </div>
     </header>
 
-    <!-- 导航栏 -->
     <nav class="navbar">
-      <div class="nav-inner">
-        <a class="nav-link" :class="{ active: route.path === '/' }" @click="$router.push('/')">Home</a>
-        <a class="nav-link" :class="{ active: route.path.startsWith('/edit') }" @click="$router.push('/edit')">Write</a>
+      <div class="nav-inner" :class="{ wide: showSidebar }">
+        <div class="nav-links">
+          <a class="nav-link" :class="{ active: route.path === '/' }" @click="$router.push('/')">首页</a>
+          <a class="nav-link" :class="{ active: route.path === '/articles' || route.path.startsWith('/article/') }" @click="$router.push('/articles')">文章</a>
+          <a class="nav-link" :class="{ active: route.path === '/friends' }" @click="$router.push('/friends')">友邻</a>
+        </div>
+        <div class="nav-tools">
+          <div class="nav-search">
+            <input
+              v-model="keyword"
+              class="nav-search-input"
+              type="text"
+              placeholder="搜索文章"
+              @keyup.enter="onSearch"
+            />
+            <button class="nav-search-btn" @click="onSearch">搜索</button>
+          </div>
+          <button class="nav-write" type="button" @click="$router.push('/edit')">写文章</button>
+        </div>
       </div>
     </nav>
 
-    <!-- 主体内容 -->
-    <div class="layout">
+    <div class="layout" :class="{ 'has-sidebar': showSidebar }">
       <main class="content">
         <router-view />
       </main>
-      <aside class="sidebar">
+      <aside v-if="showSidebar" class="sidebar">
         <div class="sidebar-card">
-          <h3 class="sidebar-title">POPULAR POSTS</h3>
+          <h3 class="sidebar-title">热门文章</h3>
           <ul class="popular-list">
             <li v-for="a in popularArticles" :key="a.id" class="popular-item">
               <a class="popular-link" @click="$router.push(`/article/${a.id}`)">{{ a.title }}</a>
@@ -37,26 +56,6 @@
             </li>
           </ul>
         </div>
-
-        <div class="sidebar-card">
-          <h3 class="sidebar-title">FOLLOW ME</h3>
-          <p class="sidebar-text">Stay connected</p>
-        </div>
-
-        <div class="sidebar-card">
-          <h3 class="sidebar-title">SUBSCRIBE</h3>
-          <p class="sidebar-text">rss feeds</p>
-        </div>
-
-        <div class="sidebar-card">
-          <h3 class="sidebar-title">CHECK THIS OUT!</h3>
-          <ul class="check-list">
-            <li>CSS Templates</li>
-            <li>Flash Templates</li>
-            <li>Flash Layouts</li>
-            <li>Flash Website Gallery</li>
-          </ul>
-        </div>
       </aside>
     </div>
 
@@ -65,74 +64,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ChatBot from './components/ChatBot.vue'
 import { listArticles } from './api/article'
 
 const route = useRoute()
+const router = useRouter()
 const popularArticles = ref([])
-const bgCanvas = ref(null)
+const keyword = ref('')
 
-// 蓝色粒子星空背景
-const initStarfield = () => {
-  const canvas = bgCanvas.value
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
+const showSidebar = computed(() => {
+  const p = route.path
+  return p === '/articles' || p.startsWith('/article/') || p.startsWith('/search')
+})
 
-  let width = (canvas.width = window.innerWidth)
-  let height = (canvas.height = window.innerHeight)
-
-  const count = Math.min(120, Math.max(60, Math.floor((width * height) / 15000)))
-  const stars = Array.from({ length: count }, () => ({
-    x: Math.random() * width,
-    y: Math.random() * height,
-    vx: (Math.random() - 0.5) * 0.4,
-    vy: (Math.random() - 0.5) * 0.4,
-    r: Math.random() * 1.5 + 0.5,
-  }))
-
-  const draw = () => {
-    ctx.clearRect(0, 0, width, height)
-    for (const s of stars) {
-      s.x += s.vx
-      s.y += s.vy
-      if (s.x < 0 || s.x > width) s.vx *= -1
-      if (s.y < 0 || s.y > height) s.vy *= -1
-
-      ctx.beginPath()
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(58, 130, 255, 0.55)'
-      ctx.fill()
-    }
-    // 粒子连线
-    for (let i = 0; i < stars.length; i++) {
-      for (let j = i + 1; j < stars.length; j++) {
-        const dx = stars[i].x - stars[j].x
-        const dy = stars[i].y - stars[j].y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 120) {
-          ctx.beginPath()
-          ctx.moveTo(stars[i].x, stars[i].y)
-          ctx.lineTo(stars[j].x, stars[j].y)
-          ctx.strokeStyle = `rgba(58, 130, 255, ${(1 - dist / 120) * 0.22})`
-          ctx.lineWidth = 1
-          ctx.stroke()
-        }
-      }
-    }
-    requestAnimationFrame(draw)
-  }
-  draw()
-
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth
-    height = canvas.height = window.innerHeight
-  })
+const onSearch = () => {
+  const q = keyword.value.trim()
+  if (!q) return
+  router.push({ path: '/search', query: { q } })
 }
 
 onMounted(async () => {
-  initStarfield()
   try {
     const res = await listArticles()
     popularArticles.value = (res.data.data || []).slice(0, 3)
@@ -141,162 +94,331 @@ onMounted(async () => {
 </script>
 
 <style>
+:root {
+  --ink: #2c2a26;
+  --muted: #6f675c;
+  --faint: #9a9186;
+  --paper: #fffaf3;
+  --paper-edge: rgba(70, 58, 42, 0.1);
+  --leaf: #3f6b4f;
+  --leaf-deep: #2f513c;
+  --clay: #c46a4a;
+  --font-sans: 'Source Sans 3', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Songti SC', 'STSong', 'Noto Serif SC', Georgia, serif;
+  --shadow-soft: 0 10px 30px rgba(80, 58, 32, 0.07);
+  --shadow-lift: 0 16px 36px rgba(80, 58, 32, 0.11);
+
+  /* Element Plus 主题色跟随页面配色 */
+  --el-color-primary: #3f6b4f;
+  --el-color-primary-light-3: #6b8f78;
+  --el-color-primary-light-5: #9bb5a3;
+  --el-color-primary-light-7: #c5d4c9;
+  --el-color-primary-light-8: #d9e3db;
+  --el-color-primary-light-9: #edf2ee;
+  --el-color-primary-dark-2: #2f513c;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #app {
-  height: 100%;
-  background-color: #0c1120;
-  color: #e2e8f0;
-  font-family: 'Georgia', 'Times New Roman', serif;
+html,
+body,
+#app {
+  min-height: 100%;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  background-color: #efe6d4;
+}
+
+body {
+  background:
+    radial-gradient(1100px 720px at 8% -10%, rgba(214, 176, 132, 0.45), transparent 58%),
+    radial-gradient(900px 680px at 96% 8%, rgba(156, 186, 154, 0.38), transparent 52%),
+    radial-gradient(800px 620px at 78% 108%, rgba(232, 196, 164, 0.42), transparent 55%),
+    linear-gradient(180deg, #f6eee0 0%, #efe4d0 46%, #e7eedf 100%);
 }
 
 .app {
   position: relative;
   z-index: 1;
   min-height: 100%;
-  background-color: transparent;
 }
 
-/* 动态粒子背景层 */
-.bg-canvas {
+.bg-wash,
+.bg-orbs,
+.bg-grain {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  inset: 0;
   pointer-events: none;
+  z-index: 0;
 }
 
-/* 流动蓝色渐变光晕层 */
-.bg-gradient {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(58, 130, 255, 0.12), transparent 45%),
-    radial-gradient(circle at 80% 70%, rgba(45, 100, 220, 0.12), transparent 45%),
-    radial-gradient(circle at 55% 15%, rgba(90, 160, 255, 0.10), transparent 50%),
-    radial-gradient(circle at 10% 85%, rgba(40, 90, 200, 0.10), transparent 50%);
-  animation: aurora 18s ease-in-out infinite;
+.bg-orbs {
+  overflow: hidden;
 }
 
-@keyframes aurora {
-  0%, 100% {
-    opacity: 0.6;
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.55;
+  animation: drift 22s ease-in-out infinite;
+}
+
+.orb-a {
+  width: 420px;
+  height: 420px;
+  left: -80px;
+  top: 80px;
+  background: #d9c19a;
+}
+
+.orb-b {
+  width: 360px;
+  height: 360px;
+  right: -60px;
+  top: 220px;
+  background: #b7cbb4;
+  animation-delay: -7s;
+}
+
+.orb-c {
+  width: 480px;
+  height: 480px;
+  left: 32%;
+  bottom: -180px;
+  background: #e8c7b0;
+  animation-delay: -13s;
+}
+
+@keyframes drift {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
-  25% {
-    opacity: 0.9;
-    transform: translate(40px, -30px) scale(1.1);
-  }
   50% {
-    opacity: 1;
-    transform: translate(-30px, 20px) scale(1.2);
-  }
-  75% {
-    opacity: 0.8;
-    transform: translate(20px, 40px) scale(1.05);
+    transform: translate(28px, -24px) scale(1.08);
   }
 }
 
-/* 顶部装饰区 */
+.bg-grain {
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+}
+
 .top-banner {
-  background: linear-gradient(135deg, #0a0e1a 0%, #141c33 50%, #0a0e1a 100%);
-  padding: 40px 0 30px;
+  position: relative;
+  z-index: 1;
+  padding: 40px 20px 20px;
   text-align: center;
-  border-bottom: 1px solid #1e293b;
+}
+
+.site-kicker {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 10px;
 }
 
 .site-title {
-  font-size: 36px;
-  color: #3a82ff;
-  font-weight: bold;
-  letter-spacing: 2px;
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 6vw, 56px);
+  font-weight: 600;
+  color: var(--leaf-deep);
+  letter-spacing: 0.02em;
+  cursor: pointer;
 }
 
 .site-subtitle {
-  font-size: 14px;
-  color: #8895a7;
-  margin-top: 6px;
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 8px;
 }
 
-/* 导航栏 */
 .navbar {
-  background-color: #0d1324;
-  border-bottom: 1px solid #1e293b;
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--paper-edge);
+  border-bottom: 1px solid var(--paper-edge);
+  background: rgba(255, 250, 243, 0.62);
+  backdrop-filter: blur(14px);
 }
 
 .nav-inner {
-  max-width: 1100px;
+  max-width: 800px;
   margin: 0 auto;
   display: flex;
-  gap: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+}
+
+.nav-inner.wide {
+  max-width: 1040px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .nav-link {
-  padding: 12px 24px;
-  color: #94a3b8;
+  padding: 8px 14px;
+  color: var(--muted);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   text-decoration: none;
+  border-radius: 999px;
   transition: color 0.2s, background 0.2s;
 }
 
-.nav-link:hover, .nav-link.active {
-  color: #3a82ff;
-  background-color: #141c33;
+.nav-link:hover,
+.nav-link.active {
+  color: var(--leaf-deep);
+  background: rgba(63, 107, 79, 0.1);
 }
 
-/* 双栏布局 */
-.layout {
-  max-width: 1100px;
-  margin: 20px auto;
+.nav-tools {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 999px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nav-search:focus-within {
+  border-color: rgba(63, 107, 79, 0.45);
+  box-shadow: 0 0 0 3px rgba(63, 107, 79, 0.1);
+}
+
+.nav-search-input {
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  padding: 0 16px;
+  height: 100%;
+  font-size: 13px;
+  outline: none;
+  width: 168px;
+  font-family: inherit;
+}
+
+.nav-search-input::placeholder {
+  color: var(--faint);
+}
+
+.nav-search-btn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--paper-edge);
+  color: var(--leaf-deep);
+  padding: 0 16px;
+  height: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-search-btn:hover {
+  background: rgba(63, 107, 79, 0.08);
+}
+
+.nav-write {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
   padding: 0 20px;
+  background: var(--leaf);
+  border: none;
+  border-radius: 999px;
+  color: #fffaf3;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.nav-write:hover {
+  background: var(--leaf-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(63, 107, 79, 0.22);
+}
+
+.nav-write:active {
+  transform: translateY(0);
+}
+
+.layout {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 36px auto 72px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  padding: 0 24px;
+}
+
+.layout.has-sidebar {
+  max-width: 1040px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: start;
 }
 
 .content {
-  flex: 1;
   min-width: 0;
 }
 
 .sidebar {
-  width: 280px;
-  flex-shrink: 0;
+  width: auto;
+  position: sticky;
+  top: 24px;
 }
 
-/* 侧边栏卡片 */
 .sidebar-card {
-  background-color: #141c33;
-  border: 1px solid #1e293b;
-  border-radius: 4px;
-  padding: 16px;
+  background: rgba(255, 250, 243, 0.78);
+  border: 1px solid var(--paper-edge);
+  border-radius: 18px;
+  padding: 20px;
   margin-bottom: 16px;
+  box-shadow: 0 10px 30px rgba(80, 58, 32, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .sidebar-title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #3a82ff;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #24304a;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--leaf-deep);
+  margin-bottom: 14px;
 }
 
 .sidebar-text {
-  font-size: 13px;
-  color: #8895a7;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 .popular-list {
@@ -304,9 +426,9 @@ html, body, #app {
 }
 
 .popular-item {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #24304a;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--paper-edge);
 }
 
 .popular-item:last-child {
@@ -316,35 +438,79 @@ html, body, #app {
 }
 
 .popular-link {
-  color: #3a82ff;
+  color: var(--ink);
   cursor: pointer;
-  font-size: 13px;
-  text-decoration: underline;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .popular-link:hover {
-  color: #6aa1ff;
+  color: var(--leaf);
 }
 
 .popular-desc {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 4px;
-  line-height: 1.4;
-}
-
-.check-list {
-  list-style: none;
-}
-
-.check-list li {
-  padding: 6px 0;
   font-size: 13px;
-  color: #94a3b8;
-  border-bottom: 1px solid #24304a;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
 }
 
-.check-list li:last-child {
-  border-bottom: none;
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid rgba(63, 107, 79, 0.5);
+  outline-offset: 2px;
+}
+
+@media (max-width: 860px) {
+  .layout,
+  .layout.has-sidebar {
+    grid-template-columns: 1fr;
+    max-width: 760px;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .nav-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .nav-tools {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .nav-search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nav-search-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .nav-write {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .top-banner {
+    padding: 32px 16px 16px;
+  }
+
+  .layout,
+  .layout.has-sidebar {
+    padding: 0 16px;
+    margin: 28px auto 56px;
+  }
 }
 </style>

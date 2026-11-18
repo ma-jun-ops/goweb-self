@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 	"web/database"
 	"web/handler"
@@ -23,8 +24,9 @@ import (
 func main() {
 	database.ConnectDB()
 	database.InitRedis()
-	database.ConnectElasticsearch()
-	database.ConnectKafka()
+	// 已停用：2G 内存服务器不再部署 Elasticsearch 和 Kafka，搜索改由 MongoDB 实现
+	// database.ConnectElasticsearch()
+	// database.ConnectKafka()
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
@@ -47,8 +49,13 @@ func main() {
 		api.GET("/files/:id/download", handler.DownloadFile)
 		api.GET("/files/:id/image", handler.ImageFile)
 		api.GET("/search", handler.SearchArticle)
+		api.GET("/github/friends", handler.GetGithubFriends)
 	}
 
-	log.Println("后端服务启动成功，监听地址: http://localhost:8080")
-	r.Run()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Println("后端服务启动成功，监听地址: http://localhost:" + port)
+	r.Run(":" + port)
 }

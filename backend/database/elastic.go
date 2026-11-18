@@ -1,5 +1,11 @@
 package database
 
+// Elasticsearch 已停用：2G 内存服务器跑不动 JVM，全文搜索改用 MongoDB 正则查询，
+// 见 db.go 中的 SearchArticles。
+// 如需恢复：去掉下方块注释，在 main.go 恢复 database.ConnectElasticsearch()，
+// 并把 db.go 中的 SearchArticles 改名或删除。
+
+/*
 import (
 	"bytes"
 	"encoding/json"
@@ -29,7 +35,7 @@ func ConnectElasticsearch() {
 	res.Body.Close()
 	ESClient = client
 	ensureArticleIndex()
-	log.Panicln("elasticsearch连接成功")
+	log.Println("elasticsearch连接成功")
 }
 
 func ensureArticleIndex() {
@@ -43,10 +49,27 @@ func ensureArticleIndex() {
 		return
 	}
 	mapping := `{
+		"settings": {
+			"analysis": {
+				"analyzer": {
+					"ngram_analyzer": {
+						"tokenizer": "ngram_tokenizer",
+						"filter": ["lowercase"]
+					}
+				},
+				"tokenizer": {
+					"ngram_tokenizer": {
+						"type": "ngram",
+						"min_gram": 2,
+						"max_gram": 3
+					}
+				}
+			}
+		},
 		"mappings": {
 			"properties": {
-				"title":   {"type": "text"},
-				"content": {"type": "text"},
+				"title":   {"type": "text", "analyzer": "ngram_analyzer"},
+				"content": {"type": "text", "analyzer": "ngram_analyzer"},
 				"tags":    {"type": "keyword"}
 			}
 		}
@@ -131,3 +154,4 @@ func SearchArticles(keyword string) ([]model.Article, error) {
 	}
 	return articles, nil
 }
+*/

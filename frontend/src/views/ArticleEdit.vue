@@ -26,9 +26,11 @@
         style="display: none"
         @change="onFileChange"
       />
-      <el-button class="btn-upload" @click="$refs.fileInput.click()">Upload Word</el-button>
-      <el-button class="btn-save" type="primary" @click="onSave">Save</el-button>
-      <el-button class="btn-back" @click="$router.back()">Back</el-button>
+      <el-button class="btn-upload" @click="$refs.fileInput.click()">上传 Word</el-button>
+      <div class="edit-actions-right">
+        <el-button class="btn-back" @click="$router.back()">返回</el-button>
+        <el-button class="btn-save" type="primary" @click="onSave">保存</el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -89,78 +91,147 @@ const onSave = async () => {
 
 <style scoped>
 .edit {
-  background-color: #141c33;
-  border: 1px solid #1e293b;
-  border-radius: 4px;
-  padding: 24px;
+  background: rgba(255, 250, 243, 0.86);
+  border: 1px solid var(--paper-edge);
+  border-radius: 22px;
+  padding: 30px 32px;
+  box-shadow: 0 12px 32px rgba(80, 58, 32, 0.06);
 }
 
 .edit-title {
-  font-size: 22px;
-  color: #3a82ff;
-  margin-bottom: 20px;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  color: var(--leaf-deep);
+  margin-bottom: 22px;
+  text-align: left;
 }
 
 .edit-input,
 .edit-textarea {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .edit-input :deep(.el-input__wrapper),
 .edit-textarea :deep(.el-textarea__inner) {
-  background-color: #0c1120 !important;
-  border: 1px solid #24304a !important;
-  color: #cbd5e1 !important;
+  background-color: #fff !important;
+  border: 1px solid var(--paper-edge) !important;
+  color: var(--ink) !important;
   box-shadow: none !important;
+  border-radius: 12px !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.edit-input :deep(.el-input__wrapper) {
+  min-height: 42px;
+}
+
+.edit-input :deep(.el-input__wrapper:hover),
+.edit-textarea :deep(.el-textarea__inner:hover) {
+  border-color: rgba(63, 107, 79, 0.35) !important;
+}
+
+.edit-input :deep(.el-input__wrapper.is-focus),
+.edit-textarea :deep(.el-textarea__inner:focus) {
+  border-color: rgba(63, 107, 79, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(63, 107, 79, 0.1) !important;
 }
 
 .edit-input :deep(.el-input__inner) {
-  color: #cbd5e1 !important;
+  color: var(--ink) !important;
 }
 
 .edit-textarea :deep(.el-textarea__inner) {
-  color: #cbd5e1 !important;
-  font-family: 'Georgia', serif;
-  line-height: 1.6;
+  color: var(--ink) !important;
+  font-family: var(--font-sans);
+  line-height: 1.8;
+  padding: 12px 14px;
 }
 
 .edit-actions {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--paper-edge);
 }
 
-.btn-upload {
-  background-color: #1e293b !important;
-  border-color: #2a3654 !important;
-  color: #cbd5e1 !important;
+.edit-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.btn-upload:hover {
-  background-color: #24304a !important;
-  border-color: #334155 !important;
+/* 抵消 Element Plus 相邻按钮默认的外边距，避免间距翻倍 */
+.edit-actions-right :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.btn-upload,
+.btn-back,
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 999px !important;
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
+}
+
+.btn-upload,
+.btn-back {
+  background: transparent !important;
+  border-color: var(--paper-edge) !important;
+  color: var(--muted) !important;
+}
+
+.btn-upload:hover,
+.btn-back:hover {
+  background: rgba(63, 107, 79, 0.06) !important;
+  border-color: rgba(63, 107, 79, 0.35) !important;
+  color: var(--leaf-deep) !important;
 }
 
 .btn-save {
-  background-color: #3a82ff !important;
-  border-color: #3a82ff !important;
-  color: #0c1120 !important;
-  font-weight: bold;
+  background: var(--leaf) !important;
+  border-color: var(--leaf) !important;
+  color: #fffaf3 !important;
+  font-weight: 600;
 }
 
 .btn-save:hover {
-  background-color: #6aa1ff !important;
-  border-color: #6aa1ff !important;
+  background: var(--leaf-deep) !important;
+  border-color: var(--leaf-deep) !important;
 }
 
-.btn-back {
-  background-color: #1e293b !important;
-  border-color: #2a3654 !important;
-  color: #cbd5e1 !important;
-}
+@media (max-width: 560px) {
+  .edit {
+    padding: 22px 18px;
+  }
 
-.btn-back:hover {
-  background-color: #24304a !important;
-  border-color: #334155 !important;
+  .edit-title {
+    font-size: 26px;
+  }
+
+  .edit-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-upload {
+    width: 100%;
+  }
+
+  .edit-actions-right {
+    width: 100%;
+  }
+
+  .edit-actions-right :deep(.el-button) {
+    flex: 1;
+  }
 }
 </style>

@@ -38,7 +38,9 @@ const showChat = ref(false)
   width: 56px;
   height: 56px;
   font-size: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #3f6b4f !important;
+  border-color: #3f6b4f !important;
+  box-shadow: 0 10px 24px rgba(63, 107, 79, 0.28);
   z-index: 999;
 }
 
@@ -48,13 +50,14 @@ const showChat = ref(false)
   bottom: 24px;
   width: 380px;
   height: 560px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: #fffaf3;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(80, 58, 32, 0.16);
   overflow: hidden;
   z-index: 999;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(70, 58, 42, 0.1);
 }
 
 .chat-header {
@@ -62,13 +65,30 @@ const showChat = ref(false)
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #409eff;
-  color: #fff;
-  font-weight: bold;
+  background: #3f6b4f;
+  color: #fffaf3;
+  font-weight: 600;
 }
 
 .close-btn {
   color: #fff;
   font-size: 18px;
+}
+
+@media (max-width: 480px) {
+  .chat-btn {
+    right: 16px;
+    bottom: 16px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .chat-window {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+    height: 70vh;
+  }
 }
 </style>

@@ -37,11 +37,12 @@ func CreateArticle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	database.PublishArticleEvent(database.ArticleEvent{
-		Action:  "index",
-		Article: &article,
-		ID:      article.ID.Hex(),
-	})
+	// 已停用 Kafka：搜索直接查 MongoDB，无需同步 ES
+	// database.PublishArticleEvent(database.ArticleEvent{
+	// 	Action:  "index",
+	// 	Article: &article,
+	// 	ID:      article.ID.Hex(),
+	// })
 	c.JSON(http.StatusOK, gin.H{"message": "发布成功", "article": article})
 }
 
@@ -140,14 +141,15 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 	database.RedisClient.Del(context.Background(), "article:"+c.Param("id"))
-	var updated model.Article
-	if err := database.ArticleCollection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&updated); err != nil {
-		database.PublishArticleEvent(database.ArticleEvent{
-			Action:  "index",
-			Article: &updated,
-			ID:      updated.ID.Hex(),
-		})
-	}
+	// 已停用 Kafka：搜索直接查 MongoDB，无需同步 ES
+	// var updated model.Article
+	// if err := database.ArticleCollection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&updated); err != nil {
+	// 	database.PublishArticleEvent(database.ArticleEvent{
+	// 		Action:  "index",
+	// 		Article: &updated,
+	// 		ID:      updated.ID.Hex(),
+	// 	})
+	// }
 	c.JSON(http.StatusOK, gin.H{"message": "文章更新成功"})
 }
 
@@ -167,10 +169,11 @@ func DeleteArticle(c *gin.Context) {
 		return
 	}
 	database.RedisClient.Del(context.Background(), "article:"+c.Param("id"))
-	database.PublishArticleEvent(database.ArticleEvent{
-		Action: "delete",
-		ID:     c.Param("id"),
-	})
+	// 已停用 Kafka：搜索直接查 MongoDB，无需同步 ES
+	// database.PublishArticleEvent(database.ArticleEvent{
+	// 	Action: "delete",
+	// 	ID:     c.Param("id"),
+	// })
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 

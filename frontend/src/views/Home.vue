@@ -1,32 +1,31 @@
 <template>
   <div class="home">
     <section class="hero">
-      <h1 class="hero-title">Welcome to My Little Yard</h1>
-      <p class="hero-desc">
-        记录生活、工作与学习中的感悟与随笔
-      </p>
-      <div class="hero-actions">
-        <a class="hero-btn primary" @click="$router.push('/articles')">Browse Articles</a>
-        <a class="hero-btn" @click="$router.push('/edit')">Write Article</a>
-      </div>
+      <p class="hero-desc">记录生活、工作与学习中的感悟与随笔</p>
     </section>
 
-    <div class="latest-section">
-      <h2 class="section-title">Latest Posts</h2>
-      <div v-if="latestArticles.length" class="latest-grid">
-        <div v-for="a in latestArticles" :key="a.id" class="latest-card" @click="$router.push(`/article/${a.id}`)">
-          <h3 class="latest-card-title">{{ a.title }}</h3>
-          <p class="latest-card-meta">{{ formatTime(a.createdAt) }}</p>
-          <p class="latest-card-desc">{{ (a.content || '').slice(0, 120) }}{{ (a.content || '').length > 120 ? '...' : '' }}</p>
-          <div class="latest-card-tags">
-            <span v-for="t in a.tags" :key="t" class="tag">{{ t }}</span>
+    <section class="latest-section">
+      <div class="section-head">
+        <h2 class="section-title">最近文章</h2>
+        <button v-if="latestArticles.length" class="text-btn" type="button" @click="$router.push('/articles')">查看全部</button>
+      </div>
+      <div v-if="latestArticles.length" class="latest-list">
+        <article v-for="a in latestArticles" :key="a.id" class="latest-card" @click="$router.push(`/article/${a.id}`)">
+          <div class="latest-card-body">
+            <h3 class="latest-card-title">{{ a.title }}</h3>
+            <p class="latest-card-meta">{{ formatTime(a.createdAt) }}</p>
+            <p class="latest-card-desc">{{ (a.content || '').slice(0, 120) }}{{ (a.content || '').length > 120 ? '...' : '' }}</p>
+            <div class="latest-card-tags">
+              <span v-for="t in a.tags" :key="t" class="tag">{{ t }}</span>
+            </div>
           </div>
-        </div>
+        </article>
       </div>
       <div v-else class="empty-state">
-        <p>No articles yet. Click "Write Article" to create your first post.</p>
+        <p>还没有文章</p>
+        <button class="hero-btn primary" type="button" @click="$router.push('/edit')">写下第一篇</button>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -49,121 +48,128 @@ onMounted(load)
 </script>
 
 <style scoped>
-.home {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 32px 20px 48px;
-}
-
 .hero {
-  text-align: center;
-  margin-bottom: 48px;
-  padding: 40px 20px;
-}
-
-.hero-title {
-  font-size: clamp(28px, 5vw, 40px);
-  font-weight: 700;
-  color: #3a82ff;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
+  text-align: left;
+  margin-bottom: 32px;
 }
 
 .hero-desc {
-  color: #8895a7;
-  font-size: 16px;
-  line-height: 1.6;
-  max-width: 480px;
-  margin: 0 auto 28px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 560px;
 }
 
 .hero-actions {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 12px;
-  justify-content: center;
 }
 
 .hero-btn {
-  display: inline-block;
-  padding: 10px 28px;
-  border: 1px solid #2a3654;
-  border-radius: 4px;
-  color: #cbd5e1;
+  min-width: 128px;
+  padding: 10px 22px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 999px;
+  color: var(--ink);
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-
-.hero-btn:hover {
-  border-color: #3a82ff;
-  color: #3a82ff;
+  background: var(--paper);
 }
 
 .hero-btn.primary {
-  background-color: #3a82ff;
-  border-color: #3a82ff;
-  color: #0c1120;
-  font-weight: bold;
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: #fffaf3;
+  font-weight: 600;
 }
 
 .hero-btn.primary:hover {
-  background-color: #6aa1ff;
-  border-color: #6aa1ff;
-  color: #0c1120;
+  background: var(--leaf-deep);
 }
 
-/* Latest Posts */
-.latest-section {
-  margin-top: 20px;
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .section-title {
-  font-size: 18px;
-  color: #3a82ff;
-  letter-spacing: 1px;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #1e293b;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  color: var(--leaf-deep);
 }
 
-.latest-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 999px;
+  background: rgba(255, 250, 243, 0.55);
+  color: var(--leaf-deep);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.text-btn:hover {
+  background: var(--paper);
+  border-color: rgba(63, 107, 79, 0.35);
+  transform: translateY(-1px);
+}
+
+.text-btn::after {
+  content: '→';
+  font-size: 13px;
+}
+
+.latest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .latest-card {
-  background-color: #141c33;
-  border: 1px solid #1e293b;
-  border-radius: 4px;
-  padding: 20px;
+  background: rgba(255, 250, 243, 0.82);
+  border: 1px solid var(--paper-edge);
+  border-radius: 16px;
+  padding: 22px 24px;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
 }
 
 .latest-card:hover {
-  border-color: #2a3654;
+  box-shadow: var(--shadow-lift);
   transform: translateY(-2px);
+  border-color: rgba(63, 107, 79, 0.22);
 }
 
 .latest-card-title {
-  font-size: 17px;
-  color: #3a82ff;
-  margin-bottom: 8px;
+  font-family: var(--font-serif);
+  font-size: 23px;
+  line-height: 1.35;
+  color: var(--ink);
+  margin-bottom: 6px;
 }
 
 .latest-card-meta {
   font-size: 12px;
-  color: #64748b;
+  color: var(--faint);
   margin-bottom: 10px;
 }
 
 .latest-card-desc {
-  font-size: 14px;
-  color: #cbd5e1;
-  line-height: 1.6;
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.65;
   margin-bottom: 12px;
 }
 
@@ -175,16 +181,22 @@ onMounted(load)
 
 .tag {
   font-size: 12px;
-  color: #94a3b8;
-  background-color: #1e293b;
-  padding: 2px 8px;
-  border-radius: 3px;
+  color: var(--leaf-deep);
+  background: rgba(63, 107, 79, 0.1);
+  padding: 3px 10px;
+  border-radius: 999px;
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: #64748b;
-  font-size: 15px;
+  padding: 48px 20px;
+  color: var(--muted);
+  background: rgba(255, 250, 243, 0.7);
+  border-radius: 18px;
+  border: 1px dashed var(--paper-edge);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 </style>

@@ -1,5 +1,11 @@
 package database
 
+// Kafka 已停用：2G 内存服务器资源不足，且生产者和消费者都在同一个进程里，
+// 没有解耦收益，只多了一个 JVM 和一个故障点。
+// 如需恢复：去掉下方块注释，在 main.go 恢复 database.ConnectKafka()，
+// 并在 handler/article.go 恢复 PublishArticleEvent 调用。
+
+/*
 import (
 	"context"
 	"encoding/json"
@@ -102,3 +108,4 @@ func consumeArticles() {
 		}
 	}
 }
+*/

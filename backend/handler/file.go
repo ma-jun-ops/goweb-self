@@ -23,6 +23,15 @@ func UploadFile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "没有收到文件"})
 		return
 	}
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	if ext == ".doc" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "不支持 .doc 格式，请用 Word 另存为 .docx 后再上传"})
+		return
+	}
+	if ext != ".docx" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "只支持 .docx 格式的 Word 文档"})
+		return
+	}
 	file, err := fileHeader.Open()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -143,11 +152,11 @@ func extractTextAndImages(documentXML []byte) (string, []string) {
 	type textNode struct {
 		Text string `xml:",chardata"`
 	}
-	decoder := xml.NewDecoder(bytes.NewReader(documentXML))//解析器
+	decoder := xml.NewDecoder(bytes.NewReader(documentXML)) //解析器
 	var builder strings.Builder
 	var rids []string
 	for {
-		token, err := decoder.Token()//下一个完整的token/文字/图片引用
+		token, err := decoder.Token() //下一个完整的token/文字/图片引用
 		if err != nil {
 			break
 		}
@@ -156,12 +165,12 @@ func extractTextAndImages(documentXML []byte) (string, []string) {
 			continue
 		}
 		switch start.Name.Local {
-		case "t"://文字
+		case "t": //文字
 			var node textNode
 			if err := decoder.DecodeElement(&node, &start); err == nil {
 				builder.WriteString(node.Text)
 			}
-		case "blip"://图片
+		case "blip": //图片
 			for _, attr := range start.Attr {
 				if attr.Name.Local == "embed" {
 					builder.WriteString("[IMG:" + attr.Value + "]")
